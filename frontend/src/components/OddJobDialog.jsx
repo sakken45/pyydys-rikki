@@ -11,13 +11,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useApp } from "@/lib/app-context";
 import { uid } from "@/lib/storage";
 
@@ -111,30 +104,34 @@ export default function OddJobDialog({ open, onOpenChange, editing }) {
                 {t("fieldOptional")}
               </span>
             </Label>
-            {presets.vehicles.length > 0 ? (
-              <Select value={vehicle} onValueChange={setVehicle}>
-                <SelectTrigger
-                  className="mt-1.5 rounded-lg"
-                  data-testid="oddjob-vehicle-select"
-                >
-                  <SelectValue placeholder={t("placeholderSelectVehicle")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {presets.vehicles.map((v) => (
-                    <SelectItem key={v} value={v}>
-                      {v}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <Input
-                value={vehicle}
-                onChange={(e) => setVehicle(e.target.value)}
-                placeholder={t("placeholderSelectVehicle")}
-                className="mt-1.5 rounded-lg"
-                data-testid="oddjob-vehicle-input"
-              />
+            <Input
+              value={vehicle}
+              onChange={(e) => setVehicle(e.target.value)}
+              placeholder={t("placeholderSelectVehicle")}
+              className="mt-1.5 rounded-lg"
+              data-testid="oddjob-vehicle-input"
+            />
+            {presets.vehicles.length > 0 && (
+              <div
+                className="mt-2 flex flex-wrap gap-1.5"
+                data-testid="oddjob-vehicle-presets"
+              >
+                {presets.vehicles.map((v) => (
+                  <button
+                    type="button"
+                    key={v}
+                    onClick={() => setVehicle(v)}
+                    data-testid={`oddjob-vehicle-preset-${v}`}
+                    className={
+                      vehicle === v
+                        ? "rounded-full border border-blue-600 bg-blue-600 px-2.5 py-1 text-xs font-medium text-white transition-all"
+                        : "rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600 transition-all hover:border-slate-300"
+                    }
+                  >
+                    {v}
+                  </button>
+                ))}
+              </div>
             )}
           </div>
 

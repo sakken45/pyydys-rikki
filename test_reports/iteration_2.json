@@ -1,0 +1,27 @@
+{
+  "summary": "Iteration 2 frontend-only re-test of Pyydys offline service-calendar app. The CRITICAL ServiceDialog bug from iteration 1 (dual Select+Input bound to same `vehicle` state resetting typed values) is FIXED — typed custom vehicle 'Van-99' now persists in input and saves successfully. Preset chip pattern works correctly for both Service & Odd Job dialogs. Full end-to-end flow exercised: 2 services + 1 odd job created → marked done with different people → archived → grouped under same date with both 'Services' and 'Odd Jobs' sub-headings → restore moves back to Active → delete works on both Active and Archive. Sidebar status counter is accurate at every step. Label rename persists across navigation AND page reload. Zero /api/* network calls during the entire flow. No page errors. All 21 assertions PASSED.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "ServiceDialog.jsx — Vehicle field is now Input-only with chip-row of preset vehicles below. Clean fix, matches OddJobDialog pattern. Good consistency.",
+    "Place field in ServiceDialog still uses Radix Select (no Input). Works fine because not dual-bound. Consider adding an 'Other / type new' option in a future iteration if users need to enter ad-hoc places, but not required by current spec.",
+    "Archive.jsx uses YYYY-MM-DD day-keys derived from completedAt (fallback to date) and renders 'Services' and 'Odd Jobs' sub-headings only when each bucket has items — clean.",
+    "Sidebar status-counts re-renders correctly from useApp() context after every state change.",
+    "No dead code, no console errors, no unhandled promise rejections observed during the full E2E run.",
+    "Minor (nit): JobCard delete is single-click with no confirm; acceptable for an offline tool, but could be hardened with a confirm() prompt for archived items if data-loss is a concern."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (no backend)", "frontend": "100% (21/21 assertions passed)"},
+  "test_credentials": "N/A — offline app, no auth",
+  "seed_data_creation": "Reset localStorage at test start, then via UI: preset places=['Garage A'], people=['John','Mary'], vehicles=['Truck-1']. Created 2 services (one typed 'Van-99' IN, one preset 'Truck-1' OUT) and 1 odd job ('Sweep floor' with Truck-1).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All previously blocked flows now pass. Both ServiceDialog and OddJobDialog use the Input + preset-chips pattern for Vehicle. Place field in ServiceDialog still uses Radix Select (single binding, works fine). data-testids verified: add-service-btn, add-oddjob-btn, service-vehicle-input, service-vehicle-preset-<value>, oddjob-vehicle-preset-<value>, service-place-select, service-action-in/out, service-save-btn, oddjob-title-input, oddjob-save-btn, service-done-<id>, oddJob-done-<id>, complete-person-<name>, complete-confirm-btn, archive-day-<YYYY-MM-DD>, service-restore-<id>, service-delete-<id>, oddJob-delete-<id>, status-counts, label-input-newServiceBtn. Note: JobCard uses kind='oddJob' (camelCase) so data-testids are 'oddJob-card-...', 'oddJob-done-...', 'oddJob-delete-...' (NOT 'oddjob-' lowercase).",
+  "rca of the issue": "Previous iteration_1 CRITICAL bug ROOT CAUSE confirmed and FIXED: ServiceDialog.jsx no longer renders both Radix Select and Input bound to the same `vehicle` state. The new implementation uses a single Input as the source of truth, with preset vehicles rendered as clickable chips below (data-testid='service-vehicle-preset-<value>') that simply call setVehicle(v) on click. Verified by typing 'Van-99' (non-preset) and observing the value persists in the input through save. No regression observed in OddJobDialog which already used the same pattern."
+}

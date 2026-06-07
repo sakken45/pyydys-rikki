@@ -126,23 +126,6 @@ export default function ServiceDialog({ open, onOpenChange, editing }) {
           {/* Vehicle */}
           <div>
             <Label className="text-slate-700">{t("fieldVehicle")}</Label>
-            {presets.vehicles.length > 0 && (
-              <Select value={vehicle} onValueChange={setVehicle}>
-                <SelectTrigger
-                  className="mt-1.5 rounded-lg"
-                  data-testid="service-vehicle-select"
-                >
-                  <SelectValue placeholder={t("placeholderSelectVehicle")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {presets.vehicles.map((v) => (
-                    <SelectItem key={v} value={v}>
-                      {v}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
             <Input
               value={vehicle}
               onChange={(e) => setVehicle(e.target.value)}
@@ -151,6 +134,29 @@ export default function ServiceDialog({ open, onOpenChange, editing }) {
               data-testid="service-vehicle-input"
               required
             />
+            {presets.vehicles.length > 0 && (
+              <div
+                className="mt-2 flex flex-wrap gap-1.5"
+                data-testid="service-vehicle-presets"
+              >
+                {presets.vehicles.map((v) => (
+                  <button
+                    type="button"
+                    key={v}
+                    onClick={() => setVehicle(v)}
+                    data-testid={`service-vehicle-preset-${v}`}
+                    className={cn(
+                      "rounded-full border px-2.5 py-1 text-xs font-medium transition-all",
+                      vehicle === v
+                        ? "border-blue-600 bg-blue-600 text-white"
+                        : "border-slate-200 bg-white text-slate-600 hover:border-slate-300",
+                    )}
+                  >
+                    {v}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Date */}
