@@ -1,0 +1,122 @@
+{
+  "theme": "LIGHT",
+  "archetype": "Industrial Utility / Clean Functional (Derived from Archetype 4: Swiss & High-Contrast)",
+  "rationale": "The application is a functional, offline utility tool for mechanics and workshop managers. It requires high clarity, dense but breathable data layouts, and clear calls to action without distracting decorative elements. The 'Pyydys' reference indicates a clean white background, a strong blue primary, and soft rounded structural elements.",
+  "colors": {
+    "background": {
+      "app": "#F8FAFC",
+      "card": "#FFFFFF",
+      "sidebar": "#F8FAFC",
+      "empty_state": "#F1F5F9"
+    },
+    "primary": {
+      "base": "#2563EB",
+      "hover": "#1D4ED8",
+      "active": "#1E40AF",
+      "foreground": "#FFFFFF"
+    },
+    "text": {
+      "primary": "#0F172A",
+      "secondary": "#475569",
+      "muted": "#94A3B8",
+      "inverse": "#FFFFFF"
+    },
+    "status": {
+      "success": "#16A34A",
+      "success_bg": "#DCFCE7",
+      "warning": "#D97706",
+      "warning_bg": "#FEF3C7",
+      "error": "#DC2626",
+      "error_bg": "#FEE2E2",
+      "neutral": "#E2E8F0"
+    },
+    "border": {
+      "default": "#E2E8F0",
+      "dashed": "#CBD5E1",
+      "focus": "#93C5FD"
+    }
+  },
+  "typography": {
+    "fonts": {
+      "heading": "IBM Plex Sans",
+      "body": "Manrope",
+      "mono": "Roboto Mono"
+    },
+    "hierarchy": {
+      "h1": "text-3xl sm:text-4xl font-semibold tracking-tight text-slate-900",
+      "h2": "text-2xl font-semibold tracking-tight text-slate-900",
+      "h3": "text-lg font-medium text-slate-900",
+      "h4": "text-base font-medium text-slate-900",
+      "body": "text-sm sm:text-base text-slate-700 leading-relaxed",
+      "small": "text-xs font-medium text-slate-500 uppercase tracking-widest"
+    }
+  },
+  "layout": {
+    "structure": "Sidebar + Main Content Area",
+    "sidebar": "Fixed left, w-64 on desktop, hidden or bottom-bar on mobile. Features icon-based navigation, active states with blue accent backgrounds, and a persistent Status Card at the bottom.",
+    "main_container": "Flex-1, max-w-7xl mx-auto, p-6 or p-8. Allows vertical scrolling.",
+    "active_jobs_page": "Bento Grid Mode: grid-cols-1 lg:grid-cols-2 gap-8. Two main columns ('Services' and 'Odd Jobs').",
+    "spacing_scale": "Generous internal padding for cards (p-6). Tight spacing between list items (gap-3)."
+  },
+  "components": {
+    "card": {
+      "style": "bg-white rounded-2xl border border-slate-200 shadow-sm",
+      "header": "Flex row, items-center justify-between, pb-4 mb-4 border-b border-slate-100",
+      "override_shadcn": "Change default Shadcn Card radius to rounded-2xl. Remove heavy shadows."
+    },
+    "buttons": {
+      "primary": "rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-all active:scale-95 px-6 py-2",
+      "secondary": "rounded-full bg-slate-100 hover:bg-slate-200 text-slate-900 transition-all",
+      "icon": "rounded-full p-2 hover:bg-slate-100 text-slate-500 hover:text-slate-900",
+      "override_shadcn": "Override Shadcn Button radius to rounded-full for primary CTAs to match the reference pill shape."
+    },
+    "list_item": {
+      "style": "flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-xl border border-slate-100 bg-white hover:bg-slate-50 transition-colors gap-4",
+      "actions": "Opacity-0 group-hover:opacity-100 transition-opacity (on desktop), always visible on mobile."
+    },
+    "empty_state": {
+      "style": "flex flex-col items-center justify-center p-12 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 text-center",
+      "icon": "w-12 h-12 text-slate-400 mb-4"
+    },
+    "forms": {
+      "inputs": "rounded-lg border-slate-200 focus:border-blue-500 focus:ring-blue-500/20 bg-white",
+      "labels": "text-sm font-medium text-slate-700 mb-1.5"
+    },
+    "badges": {
+      "style": "rounded-full px-2.5 py-0.5 text-xs font-semibold font-mono"
+    }
+  },
+  "micro_interactions": {
+    "hover": "Subtle background shifts (white to slate-50) on interactive elements.",
+    "active": "Press scale down (active:scale-95) on primary pill buttons.",
+    "transitions": "Use transition-all duration-200 ease-in-out universally for color/transform changes."
+  },
+  "icons_strategy": {
+    "library": "lucide-react",
+    "usage": "Functional mapping. 'Wrench' for Services, 'ClipboardList' for Odd Jobs, 'CheckCircle' for Mark Done, 'Archive' for Archive, 'Settings' for Config."
+  },
+  "state_management": {
+    "storage": "localStorage ONLY. Fully offline.",
+    "architecture": "Use a custom React hook (e.g., useLocalStorage) to manage arrays of objects for Services, Odd Jobs, Places, People, Vehicles, and UI Labels.",
+    "i18n_labels": "Store a dictionary of button/heading names in localStorage to support the 'rename every button' requirement."
+  },
+  "testing": {
+    "data_testid": "CRITICAL: All interactive elements MUST include data-testid. Format: kebab-case, role-based. E.g., data-testid='add-service-button', data-testid='sidebar-archive-link'."
+  },
+  "image_urls": {
+    "empty_state_illustration": {
+      "url": "https://images.unsplash.com/photo-1599256872237-5dcc0fbe9668?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1Mjh8MHwxfHNlYXJjaHwxfHxtZWNoYW5pYyUyMHdvcmtzaG9wJTIwY2xlYW58ZW58MHx8fHwxNzgwODQ0NDE0fDA&ixlib=rb-4.1.0&q=85",
+      "description": "Subtle background or empty state anchor image if required, showing a clean industrial metal frame."
+    }
+  },
+  "instructions_to_main_agent": [
+    "Use JavaScript (.jsx files), not TypeScript.",
+    "Implement a strictly offline architecture using localStorage for all data. Do not install or configure any cloud SDKs.",
+    "Create a Settings page that acts as a dictionary manager, allowing users to override default strings (e.g., 'New Service', 'Active Jobs') and persist them to localStorage.",
+    "The main layout must be a vertical list, split into two columns (Services on left, Odd Jobs on right) on desktop. DO NOT build a month-view grid calendar.",
+    "Use lucide-react for all iconography.",
+    "Override default Shadcn styles: use 'rounded-2xl' for cards and 'rounded-full' for primary CTA buttons to match the Pyydys reference.",
+    "Ensure all buttons, form inputs, and interactive lists have a 'data-testid' attribute.",
+    "For the Archive page, group the listed jobs by date (descending), using a timeline or sectioned list layout."
+  ]
+}
