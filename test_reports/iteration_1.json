@@ -1,0 +1,42 @@
+{
+  "summary": "Frontend-only Playwright testing of Pyydys offline service-calendar app. App loads, sidebar nav works, empty states render, presets add/remove works, search filter works, odd-job dialog correctly has NO place field, archive grouping by date works conceptually, label rename & reset work, persistence after reload works, clear-all wipes data, and ZERO /api/* network calls were observed. ONE CRITICAL BUG blocks the New Service flow: when vehicle presets exist, the ServiceDialog renders a Radix Select AND a free-text Input both controlled by the same state; typing a non-preset vehicle value (e.g. 'Van-99') into the Input is instantly cleared, preventing Save (browser validation 'Please fill out this field'). This also blocks mark-as-done/archive/restore/delete service flows from being exercised because no service could be created.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "ServiceDialog.jsx",
+        "issue": "Vehicle field is broken when presets.vehicles is non-empty. Both <Select value={vehicle} onValueChange={setVehicle}> and <Input value={vehicle} onChange=...> are rendered simultaneously controlled by the same state. Typing a custom vehicle (e.g. 'Van-99' which is not in presets) into the Input causes Radix Select to immediately reset vehicle state to '' (likely because the value does not match any <SelectItem>). Result: input shows empty after fill; save triggers HTML5 required-validation 'Please fill out this field'; service cannot be created with a custom vehicle name. Reproduction: add a preset vehicle in Settings, open New Service, type a different vehicle name in the input -> value disappears.",
+        "selector": "[data-testid='service-vehicle-input']",
+        "priority": "CRITICAL"
+      }
+    ],
+    "integration_issues": [
+      {
+        "flow": "New Service end-to-end -> Mark done -> Archive -> Restore -> Delete",
+        "issue": "Could not exercise these flows for services because no service can be created with a typed vehicle when presets exist (see ServiceDialog bug). Picking from the Select with a preset vehicle should still work and is the recommended workaround until fixed.",
+        "affected_selectors": ["[data-testid='service-save-btn']", "[data-testid^='service-card-']", "[data-testid^='service-done-']"]
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [
+    "FIX ServiceDialog vehicle field: choose ONE of (a) only render the Input (let it act as datalist/autocomplete using presets), or (b) only render the Select when presets exist and add an 'Other / type new' option that switches to a free-text input, or (c) render both but use separate state for the Select trigger so it never overwrites the typed value. The simplest fix: remove the Select OR set its onValueChange to setVehicle only when val is non-empty AND give the Input its own state OR add a Radix SelectItem for the typed value dynamically. Most idiomatic fix: keep Input only, and show a chip-row of preset vehicles below it that, on click, sets the input value.",
+    "After fixing, re-run full archive/restore/delete flow for services."
+  ],
+  "critical_code_review_comments": [
+    "ServiceDialog.jsx (lines 129-154): Dual Select+Input bound to same state is fundamentally broken for custom values. Radix Select coerces value to empty when not in its option list.",
+    "Settings.jsx: data-testid for preset items uses raw value substring (e.g. preset-vehicles-item-Truck #1). Values containing '#' or spaces work in CSS attribute selectors but may be fragile - acceptable for now.",
+    "OddJobDialog.jsx (lines 114-138): Same dual-pattern risk exists - vehicle is a Select when presets exist OR Input when not. This is correctly EITHER/OR (not both) and works fine, unlike ServiceDialog.",
+    "storage.js: useLocalStorage hook is well-implemented with cross-tab storage event sync. Good.",
+    "Archive.jsx groups correctly by completedAt date (YYYY-MM-DD) with newest-first ordering. Good.",
+    "No backend / no /api calls confirmed during full UI exercise — fully offline as required."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (no backend)", "frontend": "~80% of flows verified; service-creation-and-archive blocked by 1 critical bug"},
+  "seed_data_creation": "Test created preset Place 'Garage A', Person 'John', Vehicle 'Truck #1' via UI. Then attempted to create a service with vehicle 'Van-99' (intentionally non-preset). State is cleared via window.localStorage.clear() at test start.",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Service creation works fine if you PICK a vehicle from the Select instead of typing in the Input (because then the value matches a SelectItem and Radix doesn't reset it). Use that path to verify the rest of the flow (mark-done, archive grouping, restore, delete, status-counts accuracy) until the ServiceDialog bug is fixed. Verified passing: load, sidebar nav (active/archive/settings), empty states, sidebar status-counts initial 0/0, preset add (places/people/vehicles), preset chips with remove buttons, NO place field in Odd Job dialog, search input filter, label rename + reset, persistence after reload, danger-zone clear-all (with window.confirm accept), and zero /api/* network requests.",
+  "rca of the issue": "ROOT CAUSE: In ServiceDialog.jsx the Vehicle section renders BOTH <Select value={vehicle} onValueChange={setVehicle}> AND <Input value={vehicle} onChange={e => setVehicle(e.target.value)}/> simultaneously (the Input is unconditional, Select renders when presets.vehicles.length>0). Both share the same `vehicle` state. When the user types a value not present in <SelectItem> options, Radix Select calls onValueChange('') (because it cannot find a matching item to remain controlled), instantly resetting `vehicle` to empty and clearing the Input. REPRO STEPS: 1) Settings → add preset vehicle 'Truck #1'. 2) Active → click '+ New Service'. 3) Type 'Van-99' in the vehicle Input. 4) Observe input clears (state='') and Save triggers 'Please fill out this field'. MITIGATION: Either (i) hide the Input when Select is shown and add an 'Other…' SelectItem that toggles to a free-text mode, or (ii) keep Input only and render preset vehicles as a chip-row below for one-click fill, or (iii) decouple Select trigger value from `vehicle` and only push to `vehicle` on Select change."
+}
