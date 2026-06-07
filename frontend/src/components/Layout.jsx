@@ -1,5 +1,6 @@
 import { Outlet } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
+import InstallPrompt from "@/components/InstallPrompt";
 import { Toaster } from "@/components/ui/sonner";
 
 export default function Layout() {
@@ -19,6 +20,7 @@ export default function Layout() {
         </main>
       </div>
       <Toaster richColors position="top-right" />
+      <InstallPrompt />
     </div>
   );
 }
