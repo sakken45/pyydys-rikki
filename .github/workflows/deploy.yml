@@ -1,9 +1,9 @@
 name: Deploy Pyydys to GitHub Pages
 
-# Triggers: push to main, or manual run from the Actions tab
+# Triggers: push to main / master, or manual run from the Actions tab
 on:
   push:
-    branches: [main]
+    branches: [main, master]
   workflow_dispatch:
 
 # Allow the workflow to push to the gh-pages branch
@@ -22,43 +22,78 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Detects whether the React app lives in frontend/ or at the repo root.
+      # Writes the directory and the build-output path to step outputs so the
+      # rest of the workflow doesn't care which layout your repo uses.
+      - name: Detect app directory
+        id: app
+        shell: bash
+        run: |
+          if [ -f frontend/package.json ]; then
+            echo "dir=frontend" >> "$GITHUB_OUTPUT"
+            echo "build=frontend/build" >> "$GITHUB_OUTPUT"
+            echo "App found in ./frontend"
+          elif [ -f package.json ]; then
+            echo "dir=." >> "$GITHUB_OUTPUT"
+            echo "build=build" >> "$GITHUB_OUTPUT"
+            echo "App found at repo root"
+          else
+            echo "::error::No package.json found at repo root or in ./frontend"
+            exit 1
+          fi
+          echo "--- repo top-level files ---"
+          ls -la
+
+      # NOTE: no yarn cache here on purpose. Some Save-to-GitHub flows omit
+      # yarn.lock; without it the cache step fails. Skipping cache makes the
+      # workflow run a little slower the first time but never breaks.
       - name: Setup Node 20
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: yarn
-          cache-dependency-path: frontend/yarn.lock
 
+      # Use --frozen-lockfile when a lockfile is present (reproducible build),
+      # otherwise just install (yarn will generate one).
       - name: Install dependencies
-        working-directory: frontend
-        run: yarn install --frozen-lockfile
+        working-directory: ${{ steps.app.outputs.dir }}
+        shell: bash
+        run: |
+          if [ -f yarn.lock ]; then
+            echo "yarn.lock present — running frozen install"
+            yarn install --frozen-lockfile
+          else
+            echo "yarn.lock missing — running plain install"
+            yarn install
+          fi
 
       # CRA picks up PUBLIC_URL at build time and prefixes every asset path
       # (manifest, icons, JS bundles, service worker). We derive it from the
       # repo name so the build automatically targets
       #   https://<owner>.github.io/<repo>/
-      # No homepage edits in package.json needed.
+      # No edits to package.json needed.
       - name: Build production bundle
-        working-directory: frontend
+        working-directory: ${{ steps.app.outputs.dir }}
         env:
           PUBLIC_URL: /${{ github.event.repository.name }}
-          CI: "false"  # don't treat React warnings as errors
+          CI: "false"  # don't treat React warnings as build errors
         run: yarn build
 
-      # GitHub Pages 404s any unknown path. Copying index.html → 404.html
-      # makes the React Router SPA shell load for /archive, /settings, etc.
+      # GH Pages serves a 404 for unknown paths. Copying index.html → 404.html
+      # makes React Router routes (/archive, /settings) work after a refresh.
       - name: SPA fallback for React Router
-        run: cp frontend/build/index.html frontend/build/404.html
+        shell: bash
+        run: cp "${{ steps.app.outputs.build }}/index.html" "${{ steps.app.outputs.build }}/404.html"
 
-      # Without this, GH Pages runs Jekyll which ignores files / folders
-      # starting with "_" (e.g. CRA's chunk files in some setups).
+      # Without this GH Pages runs Jekyll which would ignore files starting
+      # with "_" (CRA chunk filenames in some setups, plus our _redirects).
       - name: Disable Jekyll
-        run: touch frontend/build/.nojekyll
+        shell: bash
+        run: touch "${{ steps.app.outputs.build }}/.nojekyll"
 
       - name: Publish to gh-pages branch
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./frontend/build
+          publish_dir: ./${{ steps.app.outputs.build }}
           publish_branch: gh-pages
           commit_message: "deploy: ${{ github.sha }}"
