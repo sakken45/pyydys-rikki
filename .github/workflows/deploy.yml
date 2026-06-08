@@ -1,0 +1,64 @@
+name: Deploy Pyydys to GitHub Pages
+
+# Triggers: push to main, or manual run from the Actions tab
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Allow the workflow to push to the gh-pages branch
+permissions:
+  contents: write
+
+# Cancel any in-flight run for the same ref
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: yarn
+          cache-dependency-path: frontend/yarn.lock
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: yarn install --frozen-lockfile
+
+      # CRA picks up PUBLIC_URL at build time and prefixes every asset path
+      # (manifest, icons, JS bundles, service worker). We derive it from the
+      # repo name so the build automatically targets
+      #   https://<owner>.github.io/<repo>/
+      # No homepage edits in package.json needed.
+      - name: Build production bundle
+        working-directory: frontend
+        env:
+          PUBLIC_URL: /${{ github.event.repository.name }}
+          CI: "false"  # don't treat React warnings as errors
+        run: yarn build
+
+      # GitHub Pages 404s any unknown path. Copying index.html → 404.html
+      # makes the React Router SPA shell load for /archive, /settings, etc.
+      - name: SPA fallback for React Router
+        run: cp frontend/build/index.html frontend/build/404.html
+
+      # Without this, GH Pages runs Jekyll which ignores files / folders
+      # starting with "_" (e.g. CRA's chunk files in some setups).
+      - name: Disable Jekyll
+        run: touch frontend/build/.nojekyll
+
+      - name: Publish to gh-pages branch
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./frontend/build
+          publish_branch: gh-pages
+          commit_message: "deploy: ${{ github.sha }}"
